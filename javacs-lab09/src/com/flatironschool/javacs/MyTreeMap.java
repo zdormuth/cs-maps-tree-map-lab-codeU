@@ -22,6 +22,7 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	private int size = 0;
 	private Node root = null;
+	Set<K> set = new LinkedHashSet<K>();
 
 	/**
 	 * Represents a node in the tree.
@@ -66,14 +67,31 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 		if (target == null) {
             throw new NullPointerException();
 	    }
-		
+				
 		// something to make the compiler happy
 		@SuppressWarnings("unchecked")
 		Comparable<? super K> k = (Comparable<? super K>) target;
 		
-		// the actual search
-        // TODO: Fill this in.
-        return null;
+		Node current = root;
+		int cmp = k.compareTo(current.key);
+		
+		while (cmp != 0)
+		{
+			if (cmp >= 1) // greater than
+			{
+				current = current.right;
+			}
+			else // less than
+			{
+				current = current.left;
+			}
+			if (current == null)
+			{
+				return null;
+			}
+			cmp = k.compareTo(current.key);
+		}
+		return current;
 	}
 
 	/**
@@ -92,6 +110,18 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean containsValue(Object target) {
+		Node current = root;
+		return (traverse(current, target));
+	}
+	
+	public boolean traverse(Node n, Object target) {
+		if (n != null) {
+			// visit node
+			if (equals(n.value, target)) {
+				return true;
+			}
+			return (traverse(n.left, target) || traverse(n.right, target));
+		}
 		return false;
 	}
 
@@ -116,11 +146,20 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	@Override
 	public Set<K> keySet() {
-		Set<K> set = new LinkedHashSet<K>();
-        // TODO: Fill this in.
+		inorder(root);		
 		return set;
 	}
 
+	public void inorder(Node root) {
+		Node current = root;
+		if (current != null) {
+			inorder(current.left);
+			//visit node
+			set.add(current.key);
+			inorder(current.right);			
+		}
+	}
+	
 	@Override
 	public V put(K key, V value) {
 		if (key == null) {
@@ -135,10 +174,43 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 	}
 
 	private V putHelper(Node node, K key, V value) {
-        // TODO: Fill this in.
-        return null;
+		// searches tree, if key in tree --> replace value; else --> create new node in correct place
+		// tree contains key
+		if (containsKey(key))
+		{
+			Node current = findNode(key);
+			V oldValue = current.value;
+			current.value = value;
+			return oldValue;
+		}
+		// tree does not contain key, insert it in correct spot
+		else
+		{
+			Comparable<? super K> k = (Comparable<? super K>) key;
+			Node current = node;
+			int cmp = k.compareTo(current.key);
+			while (true) {
+				if (current.left == null && cmp < 0) { // insert node to left of current node  
+					current.left = new Node(key, value);
+					size++;
+					return null;
+				}
+				else if (current.right == null && cmp > 0) { // insert node to right of current node
+					current.right = new Node(key, value);
+					size++;
+					return null;
+				}
+				else if (cmp < 0) { // key is less than current key
+					current = current.left;
+				}
+				else { // key is greater than current key
+					current = current.right;
+				}
+				cmp = k.compareTo(current.key);
+			}
+		}
 	}
-
+	 
 	@Override
 	public void putAll(Map<? extends K, ? extends V> map) {
 		for (Map.Entry<? extends K, ? extends V> entry: map.entrySet()) {
